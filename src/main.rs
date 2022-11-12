@@ -16,6 +16,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 mod colors;
 mod draw;
 mod game;
+mod history;
 mod physics;
 mod snake;
 
@@ -42,30 +43,30 @@ fn main() {
     let factory = window.factory.clone();
     let mut glyphs = Glyphs::new(font, factory, TextureSettings::new()).unwrap();
 
-    let mut main: Game = Game::new(WIDTH, HEIGHT);
-    main.start();
+    let mut game: Game = Game::new(WIDTH, HEIGHT);
+    game.start();
 
     while let Some(event) = window.next() {
         if let Some(Button::Keyboard(key)) = event.press_args() {
-            main.key_down(key);
+            game.key_down(key);
         }
 
         window.draw_2d(&event, |ctx, g| {
             clear(colors::BACKGROUND, g);
             text::Text::new_color(colors::SCORE, 20)
                 .draw(
-                    main.get_score().to_string().as_ref(),
+                    game.get_score().to_string().as_ref(),
                     &mut glyphs,
                     &ctx.draw_state,
                     ctx.transform.trans(0.0, 20.0),
                     g,
                 )
                 .unwrap();
-            main.draw(ctx, g);
+            game.draw(ctx, g);
         });
 
         event.update(|arg| {
-            main.update(arg.dt);
+            game.update(arg.dt);
         });
     }
 }

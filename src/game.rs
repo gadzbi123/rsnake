@@ -3,6 +3,7 @@ use rand::Rng;
 
 use crate::colors;
 use crate::draw::*;
+use crate::history::History;
 use crate::physics::{Direction, Position};
 use crate::snake::Snake;
 
@@ -28,21 +29,27 @@ pub struct Game {
     size: (u32, u32),
     waiting_time: f64,
     score: u32,
+    history: History,
     over: bool,
     paused: bool,
+    replay: bool,
 }
 
 impl Game {
     pub fn new(width: u32, height: u32) -> Self {
         // use fn defined at eof to calc random fruit / snake pos here
+        let random_snake_pos = calc_random_pos(width, height);
+        let random_fruit_pos = calc_random_pos(width, height);
         Self {
-            snake: Snake::new(calc_random_pos(width, height)),
-            fruit: calc_random_pos(width, height),
+            snake: Snake::new(random_snake_pos.clone()),
+            fruit: random_fruit_pos.clone(),
             size: (width, height),
             waiting_time: 0.0,
             score: 0,
+            history: History::new(random_snake_pos, random_fruit_pos),
             over: false,
             paused: true,
+            replay: false,
         }
     }
 
@@ -75,18 +82,15 @@ impl Game {
     pub fn update(&mut self, delta_time: f64) {
         self.waiting_time += delta_time;
 
-        // if self.over {
-        // if self.waiting_time > RESTART_TIME {
-        //     self.restart();
-        // }
-        // return;
-        // }
+        if self.waiting_time > fps_in_ms(FPS) && self.over && self.replay {
+            println!("REPLAY");
+            todo!("same as on the bottom");
+        }
 
         if self.waiting_time > fps_in_ms(FPS) && !self.over && !self.paused {
-            // self.check_colision() use snake.get_head_pos;
             self.waiting_time = 0.0;
 
-            if !self.snake.is_tail_overlapping() && !self.snake.will_tail_overlapp() {
+            if !self.snake.is_tail_overlapping() && !self.snake.will_tail_overlap() {
                 self.snake.update(self.size.0, self.size.1);
 
                 if *self.snake.get_head_pos() == self.fruit {
@@ -115,8 +119,15 @@ impl Game {
             Key::W | Key::Up => self.snake.set_dir(Direction::Up),
             Key::D | Key::Right => self.snake.set_dir(Direction::Right),
             Key::S | Key::Down => self.snake.set_dir(Direction::Down),
+            Key::R => self.play_replay(),
             _ => {}
         }
+    }
+
+    pub fn play_replay(&mut self) {
+        if self.over {
+            self.replay = true
+        };
     }
 
     pub fn get_score(&self) -> u32 {
@@ -139,20 +150,3 @@ impl Game {
     //     self.waiting_time = 0.0;
     // }
 }
-
-// fn calc_not_overlapping_pos(pos_vec: Vec<Position>, width: u32, height: u32) {
-//     let mut fruit_pos: Position = calc_random_pos(width, height);
-
-//     loop {
-//         // if snake_pos.y != fruit_pos.y {
-//         //     break;
-//         // }
-
-//         for pos in pos_vec {
-//             if
-//         }
-
-//         snake_pos = calc_random_pos(width, height);
-//         fruit_pos = calc_random_pos(width, height);
-//     }
-// }
