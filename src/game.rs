@@ -78,30 +78,37 @@ impl Game {
         self.snake.draw(&ctx, g);
         // draw_text(&ctx, g, colors::SCORE, self.score.to_string());
 
-        if self.over {
-            draw_overlay(&ctx, g, colors::OVERLAY, self.size)
+        if self.over && !self.replay {
+            draw_overlay(&ctx, g, colors::OVERLAY_OVER, self.size)
+        }
+        if self.over && self.replay {
+            draw_overlay(&ctx, g, colors::OVERLAY_REPLAY, self.size)
         }
     }
 
     pub fn update(&mut self, delta_time: f64) {
         self.waiting_time += delta_time;
-        if self.over {
+        if self.over && !self.replay {
             self.score = 0;
-            self.over = false;
             self.paused = true;
         }
-        if self.waiting_time > fps_in_ms(FPS) && !self.over && self.replay {
-            println!("REPLAY");
+        if self.waiting_time > fps_in_ms(FPS) && self.over && self.replay && self.paused {
             self.waiting_time = 0.0;
             if self.history.init == false {
                 self.snake = self.history.get_start_snake();
-                self.fruit = self.history.get_latest_fruit();
+                self.fruit = self.history.get_latest_fruit().unwrap();
                 self.history.init = true;
             }
 
-            let next_head = self.history.get_latest_head();
-            println!("next_head{:?}", next_head);
-            println!("head{:?}", self.snake.get_head_pos());
+            let next_head = match self.history.get_latest_head() {
+                Some(head) => head,
+                None => {
+                    self.replay = false;
+                    println!("head empty");
+                    return;
+                }
+            };
+
             if !self.snake.is_tail_overlapping()
                 && !self.snake.will_tail_overlap_replay(next_head.clone())
             {
@@ -110,13 +117,33 @@ impl Game {
 
                 if *self.snake.get_head_pos() == self.fruit {
                     self.snake.grow();
+                    let next_head = match self.history.get_latest_head() {
+                        Some(head) => head,
+                        None => {
+                            self.replay = false;
+                            println!("head empty 2");
+                            return;
+                        }
+                    };
                     self.snake
                         .update_on_replay(self.size.0, self.size.1, next_head);
-                    self.fruit = self.history.get_latest_fruit();
+                    self.fruit = match self.history.get_latest_fruit() {
+                        Some(fruit_pos) => fruit_pos,
+                        None => {
+                            self.history.rewind_replay();
+                            self.replay = false;
+                            self.history.init = false;
+                            println!("no fruit");
+                            return;
+                        }
+                    };
                     self.calc_score();
                 }
             } else {
-                self.over = true;
+                println!("{:?} {:?}", self.snake.get_head_pos(), next_head);
+                self.history.rewind_replay();
+                self.replay = false;
+                self.history.init = false;
             }
         }
 
@@ -130,11 +157,14 @@ impl Game {
                 if *self.snake.get_head_pos() == self.fruit {
                     self.snake.grow();
                     self.snake.update(self.size.0, self.size.1);
+                    self.history.add_head(self.fruit.clone());
                     self.fruit = calc_random_pos(self.size.0, self.size.1);
                     self.history.add_fruit(self.fruit.clone());
                     self.calc_score();
                 }
             } else {
+                let curr_head = self.snake.update(self.size.0, self.size.1);
+                self.history.add_head(curr_head);
                 self.over = true;
             }
         }
