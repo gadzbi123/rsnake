@@ -5,8 +5,9 @@ use crate::colors;
 use crate::draw::*;
 use crate::physics::{Direction, Position};
 
-pub const INITIAL_SNAKE_TAIL_LENGTH: usize = 2;
+pub const INITIAL_SNAKE_TAIL_LENGTH: usize = 5;
 
+#[derive(Clone)]
 pub struct Snake {
     direction: Direction,
     head: Position,
@@ -14,6 +15,11 @@ pub struct Snake {
     updated_tail_pos: bool,
 }
 
+//impl Clone for Snake {
+//fn clone(&self) -> Self {
+//*self
+//}
+//}
 impl Snake {
     pub fn new(head: Position) -> Self {
         let (x, y) = (head.x, head.y);
@@ -40,7 +46,15 @@ impl Snake {
     // pub fn grow(&mut self, x: u32, y: u32) {
     //     self.tail.push_back(Position { x, y })
     // }
-    pub fn update(&mut self, width: u32, height: u32) {
+    pub fn update_on_replay(&mut self, width: u32, height: u32, head: Position) {
+        if self.tail.len() > 0 {
+            self.tail.push_front(self.head.clone());
+            self.tail.pop_back();
+        }
+        self.head = head;
+    }
+
+    pub fn update(&mut self, width: u32, height: u32) -> Position {
         if self.tail.len() > 0 {
             self.tail.push_front(self.head.clone());
             self.tail.pop_back();
@@ -64,6 +78,7 @@ impl Snake {
         }
 
         self.updated_tail_pos = true;
+        self.head.clone()
     }
 
     pub fn draw(&self, ctx: &Context, g: &mut G2d) {
@@ -101,7 +116,7 @@ impl Snake {
     //     && next_pos.y <= (height - 1) as i32
     //     &&
 
-    // !self.is_tail_overlapping()
+    // self.is_tail_overlapping()
     // }
 
     pub fn is_tail_overlapping(&self) -> bool {
@@ -126,6 +141,15 @@ impl Snake {
         false
     }
 
+    pub fn will_tail_overlap_replay(&self, next: Position) -> bool {
+        for pos in self.tail.iter() {
+            if *pos == next {
+                return true;
+            }
+        }
+
+        false
+    }
     pub fn grow(&mut self) {
         let last = match self.tail.back() {
             Some(pos) => pos.clone(),

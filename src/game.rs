@@ -1,3 +1,4 @@
+use piston_window::modular_index::next;
 use piston_window::*;
 use rand::Rng;
 
@@ -46,7 +47,10 @@ impl Game {
             size: (width, height),
             waiting_time: 0.0,
             score: 0,
-            history: History::new(random_snake_pos, random_fruit_pos),
+            history: History::new(
+                Snake::new(random_snake_pos.clone()),
+                random_fruit_pos.clone(),
+            ),
             over: false,
             paused: true,
             replay: false,
@@ -81,22 +85,53 @@ impl Game {
 
     pub fn update(&mut self, delta_time: f64) {
         self.waiting_time += delta_time;
-
-        if self.waiting_time > fps_in_ms(FPS) && self.over && self.replay {
+        if self.over {
+            self.score = 0;
+            self.over = false;
+            self.paused = true;
+        }
+        if self.waiting_time > fps_in_ms(FPS) && !self.over && self.replay {
             println!("REPLAY");
-            todo!("same as on the bottom");
+            self.waiting_time = 0.0;
+            if self.history.init == false {
+                self.snake = self.history.get_start_snake();
+                self.fruit = self.history.get_latest_fruit();
+                self.history.init = true;
+            }
+
+            let next_head = self.history.get_latest_head();
+            println!("next_head{:?}", next_head);
+            println!("head{:?}", self.snake.get_head_pos());
+            if !self.snake.is_tail_overlapping()
+                && !self.snake.will_tail_overlap_replay(next_head.clone())
+            {
+                self.snake
+                    .update_on_replay(self.size.0, self.size.1, next_head.clone());
+
+                if *self.snake.get_head_pos() == self.fruit {
+                    self.snake.grow();
+                    self.snake
+                        .update_on_replay(self.size.0, self.size.1, next_head);
+                    self.fruit = self.history.get_latest_fruit();
+                    self.calc_score();
+                }
+            } else {
+                self.over = true;
+            }
         }
 
-        if self.waiting_time > fps_in_ms(FPS) && !self.over && !self.paused {
+        if self.waiting_time > fps_in_ms(FPS) && !self.over && !self.paused && !self.replay {
             self.waiting_time = 0.0;
 
             if !self.snake.is_tail_overlapping() && !self.snake.will_tail_overlap() {
-                self.snake.update(self.size.0, self.size.1);
+                let curr_head = self.snake.update(self.size.0, self.size.1);
+                self.history.add_head(curr_head);
 
                 if *self.snake.get_head_pos() == self.fruit {
                     self.snake.grow();
                     self.snake.update(self.size.0, self.size.1);
                     self.fruit = calc_random_pos(self.size.0, self.size.1);
+                    self.history.add_fruit(self.fruit.clone());
                     self.calc_score();
                 }
             } else {
@@ -125,7 +160,7 @@ impl Game {
     }
 
     pub fn play_replay(&mut self) {
-        if self.over {
+        if self.paused {
             self.replay = true
         };
     }
