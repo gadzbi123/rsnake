@@ -1,4 +1,3 @@
-use piston_window::modular_index::next;
 use piston_window::*;
 use rand::Rng;
 
@@ -9,7 +8,7 @@ use crate::physics::{Direction, Position};
 use crate::snake::Snake;
 
 const FPS: f64 = 10.0;
-// const RESTART_TIME: f64 = 1.0;
+const FPS_REPLAY: f64 = 10.0;
 
 fn fps_in_ms(fps: f64) -> f64 {
     1.0 / fps
@@ -61,8 +60,8 @@ impl Game {
         self.paused = false;
     }
 
-    pub fn pause(&mut self) {
-        self.paused = true;
+    pub fn pause_toggle(&mut self) {
+        self.paused = !self.paused;
     }
 
     // pub fn toggle_game_state(&mut self) {
@@ -89,64 +88,43 @@ impl Game {
     pub fn update(&mut self, delta_time: f64) {
         self.waiting_time += delta_time;
         if self.over && !self.replay {
-            self.score = 0;
             self.paused = true;
         }
-        if self.waiting_time > fps_in_ms(FPS) && self.over && self.replay && self.paused {
+        if self.waiting_time > fps_in_ms(FPS_REPLAY) && self.over && self.replay && self.paused {
             self.waiting_time = 0.0;
             if self.history.init == false {
                 self.snake = self.history.get_start_snake();
                 self.fruit = self.history.get_latest_fruit().unwrap();
                 self.history.init = true;
+                self.score = 0;
             }
 
             let next_head = match self.history.get_latest_head() {
                 Some(head) => head,
-                None => {
-                    self.replay = false;
-                    println!("head empty");
-                    return;
-                }
+                None => return,
             };
 
-            if !self.snake.is_tail_overlapping()
-                && !self.snake.will_tail_overlap_replay(next_head.clone())
-            {
+            if !self.snake.will_tail_overlap_replay(next_head.clone()) {
                 self.snake
                     .update_on_replay(self.size.0, self.size.1, next_head.clone());
 
                 if *self.snake.get_head_pos() == self.fruit {
                     self.snake.grow();
-                    let next_head = match self.history.get_latest_head() {
-                        Some(head) => head,
-                        None => {
-                            self.replay = false;
-                            println!("head empty 2");
-                            return;
-                        }
-                    };
-                    self.snake
-                        .update_on_replay(self.size.0, self.size.1, next_head);
                     self.fruit = match self.history.get_latest_fruit() {
                         Some(fruit_pos) => fruit_pos,
-                        None => {
-                            self.history.rewind_replay();
-                            self.replay = false;
-                            self.history.init = false;
-                            println!("no fruit");
-                            return;
-                        }
+                        None => return,
                     };
                     self.calc_score();
                 }
             } else {
-                println!("{:?} {:?}", self.snake.get_head_pos(), next_head);
                 self.history.rewind_replay();
                 self.replay = false;
-                self.history.init = false;
             }
         }
+        self.update_on_play();
+    }
 
+    fn update_on_play(&mut self) {
         if self.waiting_time > fps_in_ms(FPS) && !self.over && !self.paused && !self.replay {
             self.waiting_time = 0.0;
 
@@ -156,8 +134,8 @@ impl Game {
 
                 if *self.snake.get_head_pos() == self.fruit {
                     self.snake.grow();
-                    self.snake.update(self.size.0, self.size.1);
-                    self.history.add_head(self.fruit.clone());
+                    let curr_head = self.snake.update(self.size.0, self.size.1);
+                    self.history.add_head(curr_head);
                     self.fruit = calc_random_pos(self.size.0, self.size.1);
                     self.history.add_fruit(self.fruit.clone());
                     self.calc_score();
@@ -185,12 +163,13 @@ impl Game {
             Key::D | Key::Right => self.snake.set_dir(Direction::Right),
             Key::S | Key::Down => self.snake.set_dir(Direction::Down),
             Key::R => self.play_replay(),
+            Key::Space => self.pause_toggle(),
             _ => {}
         }
     }
 
     pub fn play_replay(&mut self) {
-        if self.paused {
+        if self.paused && self.over {
             self.replay = true
         };
     }

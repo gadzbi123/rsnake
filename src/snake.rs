@@ -5,7 +5,7 @@ use crate::colors;
 use crate::draw::*;
 use crate::physics::{Direction, Position};
 
-pub const INITIAL_SNAKE_TAIL_LENGTH: usize = 5;
+pub const INITIAL_SNAKE_TAIL_LENGTH: usize = 2;
 
 #[derive(Clone)]
 pub struct Snake {

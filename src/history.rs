@@ -51,6 +51,7 @@ impl History {
     pub fn rewind_replay(&mut self) {
         self.heads_pos.append(&mut self.hp);
         self.fruits_pos.append(&mut self.fp);
+        self.init = false;
     }
 
     pub fn get_start_snake(&self) -> Snake {
