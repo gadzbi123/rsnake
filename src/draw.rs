@@ -1,8 +1,8 @@
 use crate::colors;
 use crate::physics::{Direction, Position};
 use piston_window::types::Color;
-use piston_window::{rectangle, rectangle::square, Context, G2d, Image, Texture};
-use piston_window::{Flip, TextureSettings};
+use piston_window::{ellipse, rectangle, Context, G2d};
+use std::f64::consts::PI;
 use std::path::Path;
 
 pub const BLOCK_SIZE: f64 = 25.0;
@@ -55,11 +55,45 @@ pub fn draw_snake_head(ctx: &Context, g: &mut G2d, c: Color, pos: &Position, dir
     }
 }
 
-pub fn draw_fruit(ctx: &Context, g: &mut G2d, c: Color, pos: &Position) {
-    //let image = Image::new().rect(square(0.0, 0.0, 200.0));
-    //let mut texture;
+pub fn draw_fruit(ctx: &Context, g: &mut G2d, c: (Color, Color), pos: &Position) {
+    ellipse(
+        c.0,
+        [
+            pos.x as f64 * BLOCK_SIZE,
+            pos.y as f64 * BLOCK_SIZE,
+            BLOCK_SIZE,
+            BLOCK_SIZE,
+        ],
+        ctx.transform,
+        g,
+    );
+    // vertical tree part
+    rectangle(
+        c.1,
+        [
+            pos.x as f64 * BLOCK_SIZE + 11.0,
+            pos.y as f64 * BLOCK_SIZE - 6.0,
+            4.0,
+            7.0,
+        ],
+        ctx.transform,
+        g,
+    );
+    // horizontal tree part
+    rectangle(
+        c.1,
+        [
+            pos.x as f64 * BLOCK_SIZE + 11.0,
+            pos.y as f64 * BLOCK_SIZE - 8.0,
+            7.0,
+            4.0,
+        ],
+        ctx.transform,
+        g,
+    );
+    //    let image = Image::new().rect(square(0.0, 0.0, 200.0));
     //Texture::from_path(
-    //texture,
+    //g,
     //Path::new("Example.png"),
     //Flip::None,
     //&TextureSettings::new(),

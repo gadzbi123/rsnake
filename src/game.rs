@@ -73,7 +73,13 @@ impl Game {
     // }
 
     pub fn draw(&self, ctx: Context, g: &mut G2d) {
-        draw_block(&ctx, g, colors::FRUIT, &self.fruit);
+        draw_fruit(
+            &ctx,
+            g,
+            (colors::FRUIT_BASE, colors::FRUIT_TREE),
+            &self.fruit,
+        );
+        //draw_block(&ctx, g, colors::FRUIT, &self.fruit);
         self.snake.draw(&ctx, g);
         // draw_text(&ctx, g, colors::SCORE, self.score.to_string());
 
