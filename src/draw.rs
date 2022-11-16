@@ -1,7 +1,7 @@
 use crate::colors;
 use crate::physics::{Direction, Position};
 use piston_window::types::Color;
-use piston_window::{ellipse, rectangle, Context, G2d};
+use piston_window::{ellipse, rectangle, Context, G2d, Image, Texture};
 use std::f64::consts::PI;
 use std::path::Path;
 
@@ -56,6 +56,7 @@ pub fn draw_snake_head(ctx: &Context, g: &mut G2d, c: Color, pos: &Position, dir
 }
 
 pub fn draw_fruit(ctx: &Context, g: &mut G2d, c: (Color, Color), pos: &Position) {
+    // apple part
     ellipse(
         c.0,
         [
@@ -91,9 +92,9 @@ pub fn draw_fruit(ctx: &Context, g: &mut G2d, c: (Color, Color), pos: &Position)
         ctx.transform,
         g,
     );
-    //    let image = Image::new().rect(square(0.0, 0.0, 200.0));
+    //let image = Image::new().rect(square(0.0, 0.0, 200.0));
     //Texture::from_path(
-    //g,
+    //,
     //Path::new("Example.png"),
     //Flip::None,
     //&TextureSettings::new(),

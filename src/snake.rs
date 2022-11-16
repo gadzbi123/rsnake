@@ -171,4 +171,29 @@ impl Snake {
 
         pos
     }
+
+    pub fn get_direction_replay(&self) -> Direction {
+        let head = self.head.clone();
+        let mut _tail = self.tail.clone();
+        let tail_first = _tail.pop_front().unwrap();
+        let tail_second = _tail.pop_front().unwrap();
+        let dir = match head {
+            Position { x, .. } if x > tail_first.x && tail_first.x == tail_second.x => {
+                Direction::Right
+            }
+            Position { x, .. } if x < tail_first.x && tail_first.x == tail_second.x => {
+                Direction::Left
+            }
+
+            Position { y, .. } if y > tail_first.y && tail_first.y == tail_second.y => {
+                Direction::Down
+            }
+            Position { y, .. } if y < tail_first.y && tail_first.y == tail_second.y => {
+                Direction::Up
+            }
+            _ => self.direction,
+        };
+
+        dir
+    }
 }

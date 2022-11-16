@@ -96,6 +96,11 @@ impl Game {
         if self.over && !self.replay {
             self.paused = true;
         }
+        self.update_on_replay();
+        self.update_on_play();
+    }
+
+    fn update_on_replay(&mut self) {
         if self.waiting_time > fps_in_ms(FPS_REPLAY) && self.over && self.replay && self.paused {
             self.waiting_time = 0.0;
             if self.history.init == false {
@@ -127,9 +132,7 @@ impl Game {
                 self.replay = false;
             }
         }
-        self.update_on_play();
     }
-
     fn update_on_play(&mut self) {
         if self.waiting_time > fps_in_ms(FPS) && !self.over && !self.paused && !self.replay {
             self.waiting_time = 0.0;
